@@ -1,0 +1,38 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+disable_tls() {
+  info "Disable TLS"
+  cat <<EOF | ldapmodify -Y EXTERNAL -H ldapi:///
+dn: cn=config
+changetype: modify
+delete: olcTLSCipherSuite
+-
+delete: olcTLSCACertificateFile
+-
+delete: olcTLSCertificateFile
+-
+delete: olcTLSCertificateKeyFile
+-
+delete: olcTLSDHParamFile
+-
+delete: olcTLSVerifyClient
+EOF
+  info "Disable TLS done"
+}
+
+if is_not_initialized; then
+  if ! is_boolean_yes "$LDAP_TLS_ENABLED"; then
+    disable_tls
+  fi
+else
+  if ! is_boolean_yes "$LDAP_TLS_ENABLED"; then
+    disable_tls
+  fi
+fi

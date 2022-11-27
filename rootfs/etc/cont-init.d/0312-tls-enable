@@ -1,0 +1,53 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+LDAP_TLS_CA_CRT_FILE="$LDAP_TLS_CRT_DIR/$LDAP_TLS_CA_CRT_FILENAME"
+LDAP_TLS_CRT_FILE="$LDAP_TLS_CRT_DIR/$LDAP_TLS_CRT_FILENAME"
+LDAP_TLS_KEY_FILE="$LDAP_TLS_CRT_DIR/$LDAP_TLS_KEY_FILENAME"
+LDAP_TLS_DH_PARAM_PATH="$LDAP_TLS_CRT_DIR/$LDAP_TLS_DH_PARAM_FILENAME"
+
+if is_not_initialized; then
+
+  if is_boolean_yes "$LDAP_TLS_ENABLED"; then
+    info "Add TLS to slapd"
+
+    cat <<EOF | ldapmodify -Y EXTERNAL -H ldapi:///
+dn: cn=config
+changetype: modify
+replace: olcTLSCipherSuite
+olcTLSCipherSuite:${LDAP_TLS_CIPHER_SUITE}
+-
+replace: olcTLSCACertificateFile
+olcTLSCACertificateFile: ${LDAP_TLS_CA_CRT_FILE}
+-
+replace: olcTLSCertificateFile
+olcTLSCertificateFile: ${LDAP_TLS_CRT_FILE}
+-
+replace: olcTLSCertificateKeyFile
+olcTLSCertificateKeyFile: ${LDAP_TLS_KEY_FILE}
+-
+replace: olcTLSDHParamFile
+olcTLSDHParamFile: ${LDAP_TLS_DH_PARAM_PATH}
+-
+replace: olcTLSVerifyClient
+olcTLSVerifyClient: ${LDAP_TLS_VERIFY_CLIENT}
+EOF
+
+    sed -i --follow-symlinks "s,TLS_CACERT.*,TLS_CACERT ${LDAP_TLS_CA_CRT_FILE},g" /etc/ldap/ldap.conf
+    echo "TLS_REQCERT ${LDAP_TLS_VERIFY_CLIENT}" >>/etc/ldap/ldap.conf
+    cp -f /etc/ldap/ldap.conf /assets/ldap.conf
+
+    info "validate TLS connection"
+
+    FQDN="$(/bin/hostname --fqdn)"
+    openssl s_client -connect "${FQDN}":636 -showcerts -state -CAfile /etc/ldap/ssl/ca.crt
+
+    info "Add TLS to slapd done"
+  fi
+fi

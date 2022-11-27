@@ -1,0 +1,73 @@
+#!/usr/bin/with-contenv bash
+
+# Set the default values for the environment variables if not set
+
+export LDAP_DB_DIR="/var/lib/ldap"
+export LDAP_ETC_DIR="/etc/ldap"
+export LDAP_CONFIG_DIR="$LDAP_ETC_DIR/slapd.d"
+export LDAP_SCHEMA_DIR="$LDAP_ETC_DIR/schema"
+export LDAP_RUN_DIR="/var/run/slapd"
+export LDAP_RUN_PID_FILE="$LDAP_RUN_DIR/slapd.pid"
+export LDAP_RUN_ARGS_FILE="$LDAP_RUN_DIR/slapd.args"
+export LDAP_INSTALL_LOCK="$LDAP_RUN_DIR/install.lock"
+
+# ldif directory
+export LDAP_SHARE_DIR="/opt/ldap/share" # this is the directory where the ldif files are copied to
+export LDAP_LDIF_TEMPLATE_DIR="/opt/ldap/ldif-templates" # this is the directory where the ldif templates are copied to
+
+# readonly user
+export LDAP_READONLY_USER_USERNAME=${LDAP_READONLY_USER_USERNAME:-"readonly"}
+export LDAP_READONLY_USER_PASSWORD=${LDAP_READONLY_USER_PASSWORD:-"readonly"}
+export LDAP_READONLY_USER_ENABLED=false
+
+# tls
+export LDAP_TLS_ENABLED=true
+export LDAP_TLS_CRT_DIR="$LDAP_ETC_DIR/ssl"
+export LDAP_TLS_VOLUME_DIR="/assets/certs"
+export LDAP_TLS_CRT_FILENAME=${LDAP_TLS_CRT_FILENAME:-"cert.crt"}
+export LDAP_TLS_KEY_FILENAME=${LDAP_TLS_KEY_FILENAME:-"cert.key"}
+export LDAP_TLS_CA_CRT_FILENAME=${LDAP_TLS_CA_CRT_FILENAME:-"ca.crt"}
+#export LDAP_TLS_CA_KEY_FILENAME=${LDAP_TLS_CA_KEY_FILENAME:-"ca.key"}
+export LDAP_TLS_VERIFY_CLIENT=${LDAP_TLS_VERIFY_CLIENT:-"demand"}
+export LDAP_TLS_CIPHER_SUITE=${LDAP_TLS_CIPHER_SUITE:-"SECURE256:+SECURE128:-VERS-TLS-ALL:+VERS-TLS1.2:-RSA:-DHE-DSS:-CAMELLIA-128-CBC:-CAMELLIA-256-CBC"}
+export LDAP_TLS_DH_PARAM_FILENAME=${LDAP_TLS_DH_PARAM_FILENAME:-"dhparam.pem"}
+
+# hostname
+export LDAP_HOSTNAME=${LDAP_HOSTNAME:-"ldap"}
+
+# replicator
+export LDAP_REPLICATOR_USERNAME=${LDAP_REPLICATOR_USERNAME:-"replicator"}
+export LDAP_REPLICATOR_PASSWORD=${LDAP_REPLICATOR_PASSWORD:-"replicator"}
+export LDAP_REPLICATOR_ENABLED=${LDAP_REPLICATOR_ENABLED:-"true"}
+export LDAP_REPLICATOR_MASTER=${LDAP_REPLICATOR_MASTER:-"true"}
+export LDAP_REPLICATOR_CONSUMER_HOST=${LDAP_REPLICATOR_CONSUMER_HOST:-"none"} # more than one consumer host, use comma to separate
+export LDAP_REPLICATOR_MODE=${LDAP_REPLICATOR_MODE:-"Syncrepl"} # values: Syncrepl, Multi-Master、MirrorMode、 Proxy、Delta
+
+# log
+export LDAP_LOG_LEVEL=${LDAP_LOG_LEVEL:-"256"}
+export LDAP_LOG_DIR="/var/log/slapd"
+export LDAP_DB_ACCESS_LOG_DIR="${LDAP_LOG_DIR}/accesslog"
+
+# admin
+export LDAP_ADMIN_USERNAME=${LDAP_ADMIN_USERNAME:-"admin"}
+export LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD:-"admin"}
+
+# config
+export LDAP_CONFIG_PASSWORD=${LDAP_CONFIG_PASSWORD:-"config"}
+
+# backend
+export LDAP_BACKEND=${LDAP_BACKEND:-"mdb"}
+
+# domain
+export LDAP_DOMAIN=${LDAP_DOMAIN:-"example.org"}
+export LDAP_ORGANISATION=${LDAP_ORGANISATION:-"Example Inc."}
+export LDAP_BASE_DN=${LDAP_BASE_DN:-"dc=example,dc=org"}
+
+
+# auditlog
+export LDAP_AUDIT_LOG_ENABLED=${LDAP_AUDIT_LOG_ENABLED:-"true"}
+export LDAP_AUDIT_LOG_FILE=${LDAP_AUDIT_LOG_FILE:-"$LDAP_LOG_DIR/auditlog.log"}
+
+# dyngroup
+export LDAP_DYNGROUP_ENABLED=${LDAP_DYNGROUP_ENABLED:-"true"}
+

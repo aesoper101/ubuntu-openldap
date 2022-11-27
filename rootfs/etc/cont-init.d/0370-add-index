@@ -1,0 +1,28 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+
+if is_not_initialized; then
+    info "Add index to slapd"
+
+  cat <<EOF |  ldapmodify -Y EXTERNAL -H ldapi:///
+# Add indexes
+dn: olcDatabase={1}${LDAP_BACKEND},cn=config
+changetype:  modify
+replace: olcDbIndex
+olcDbIndex: uid eq
+olcDbIndex: mail eq
+olcDbIndex: memberOf eq
+olcDbIndex: entryCSN eq
+olcDbIndex: entryUUID eq
+olcDbIndex: objectClass eq
+EOF
+
+    info "Add index to slapd done"
+fi

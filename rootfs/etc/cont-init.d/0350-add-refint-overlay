@@ -1,0 +1,34 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+if is_not_initialized; then
+   info "Add refint overlay to slapd"
+
+    ldapmodify -Y EXTERNAL -H ldapi:///  <<EOF
+# Load refint module
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: refint
+
+# Backend refint overlay
+dn: olcOverlay={1}refint,olcDatabase={1}${LDAP_BACKEND},cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcRefintConfig
+olcOverlay: {1}refint
+olcRefintAttribute: owner
+olcRefintAttribute: manager
+olcRefintAttribute: uniqueMember
+olcRefintAttribute: member
+olcRefintAttribute: memberOf
+EOF
+
+   info "Add refint overlay to slapd done"
+fi

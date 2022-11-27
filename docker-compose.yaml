@@ -1,0 +1,53 @@
+version: '3.7'
+services:
+  openldap:
+    image: aesoper/openldap:1.0.0
+    privileged: true
+    container_name: openldap
+    ports:
+      - "389:389"
+      - "636:636"
+    environment:
+      LDAP_LOG_LEVEL: "256"
+      LDAP_REPLICATOR_CONSUMER_HOSTS: "ldap01.example.org,ldap02.example.org"
+      LDAP_HOSTNAME: "ldap"
+    hostname: "ldap"
+    domainname: "example.org"
+    networks:
+      - openldap
+
+#  openldap1:
+#    image: aesoper/openldap:1.0.0
+#    privileged: true
+#    container_name: openldap01
+#    ports:
+#      - "2389:389"
+#      - "2636:636"
+#    environment:
+#      LDAP_LOG_LEVEL: "256"
+#      LDAP_REPLICATOR_MASTER: false
+#      LDAP_HOSTNAME: "ldap01"
+#    hostname: "ldap01"
+#    domainname: "example.org"
+#    networks:
+#      - openldap
+#
+#  openldap2:
+#    image: aesoper/openldap:1.0.0
+#    privileged: true
+#    container_name: openldap02
+#    ports:
+#      - "3389:389"
+#      - "3636:636"
+#    environment:
+#      LDAP_LOG_LEVEL: "256"
+#      LDAP_REPLICATOR_MASTER: false
+#      LDAP_HOSTNAME: "ldap02"
+#    hostname: "ldap02"
+#    domainname: "example.org"
+#    networks:
+#      - openldap
+
+networks:
+  openldap:
+    driver: bridge

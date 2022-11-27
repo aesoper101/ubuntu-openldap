@@ -1,0 +1,27 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+if is_not_initialized && is_boolean_yes "$LDAP_AUDIT_LOG_ENABLED"; then
+  info "Add auditlog overlay to slapd"
+
+  cat <<EOF | ldapmodify -Y EXTERNAL -H ldapi:///
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: {1}auditlog
+
+dn: olcOverlay=auditlog,olcDatabase={1}${LDAP_BACKEND},cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcAuditLogConfig
+olcAuditlogFile: ${LDAP_AUDIT_LOG_FILE}
+EOF
+
+  info "Add auditlog overlay to slapd done"
+fi

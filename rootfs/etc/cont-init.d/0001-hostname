@@ -1,0 +1,26 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+if is_not_initialized; then
+  info "set hostname"
+
+  FQDN="$(/bin/hostname --fqdn)"
+  if [ "$FQDN" != "$HOSTNAME" ]; then
+    FQDN_PARAM="$FQDN"
+  else
+    FQDN_PARAM=""
+  fi
+
+  # shellcheck disable=SC2002
+  ETC_HOSTS=$(cat /etc/hosts | sed "/$HOSTNAME/d")
+  echo "0.0.0.0 $FQDN_PARAM $HOSTNAME" >/etc/hosts
+  echo "$ETC_HOSTS" >>/etc/hosts
+
+  info "set hostname done"
+fi

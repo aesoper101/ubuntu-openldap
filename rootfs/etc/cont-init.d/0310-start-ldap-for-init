@@ -1,0 +1,18 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+info "Run slapd in background for init"
+
+#  slapd -h "ldap:/// ldaps:/// ldapi:///" -u openldap -g openldap -d "$LDAP_LOG_LEVEL" &
+slapd -h "ldap:/// ldapi:///" -u openldap -g openldap -d "$LDAP_LOG_LEVEL" 2>&1 &
+sleep 2
+
+info "Run slapd in background for init done"
+#slapd -h "ldap:/// ldaps:/// ldapi:///" -u openldap -g openldap -d  256 -F /etc/ldap/slapd.d -f /etc/ldap/ldap.conf
+

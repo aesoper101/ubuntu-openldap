@@ -1,0 +1,133 @@
+#!/usr/bin/with-contenv bash
+
+source /assets/functions/setenv
+source /assets/functions/log-utils
+
+# Checks whether a directory is empty or not
+is_dir_empty() {
+  local -r path="${1:?missing directory}"
+  local -r dir="$(realpath "$path")"
+  if [[ ! -d "$dir" ]] || [[ -z "$(ls -A "$dir")" ]]; then
+    true
+  else
+    false
+  fi
+}
+
+ensure_dir_exists() {
+  local -r path="${1:?missing directory}"
+  local -r dir="$(realpath "$path")"
+  if [[ ! -d "$dir" ]]; then
+    # if $dir is empty, then create it
+    if [[ -n "$dir" ]]; then
+      mkdir -p "$dir"
+    else
+      # if $dir is not empty, then create it and its parent directories
+      mkdir -p "$path"
+    fi
+  fi
+}
+
+is_file_writable() {
+  local file="${1:?missing file}"
+  local dir
+  dir="$(dirname "$file")"
+
+  if [[ (-f "$file" && -w "$file") || (! -f "$file" && -d "$dir" && -w "$dir") ]]; then
+    true
+  else
+    false
+  fi
+}
+
+is_file_readable() {
+  local file="${1:?missing file}"
+  local dir
+  dir="$(dirname "$file")"
+
+  if [[ (-f "$file" && -r "$file") || (! -f "$file" && -d "$dir" && -r "$dir") ]]; then
+    true
+  else
+    false
+  fi
+}
+
+is_boolean_yes() {
+  local -r value="${1:?missing value}"
+  if [[ "$value" =~ ^(yes|true|1)$ ]]; then
+    true
+  else
+    false
+  fi
+}
+
+copy_dir_file_if_exists() {
+  local src=$1
+  local dest=$2
+  if [ -n "${src}" ]; then
+    info -e "Copy from internal path ${src} to ${dest}"
+    # shellcheck disable=SC2086
+    cp -R "${src}" ${dest}
+  fi
+}
+
+
+is_service_running() {
+  local pid="${1:?pid is missing}"
+
+  kill -0 "$pid" 2>/dev/null
+}
+
+get_pid_from_file() {
+  local pid_file="${1:?pid file is missing}"
+
+  if [[ -f "$pid_file" ]]; then
+    if [[ -n "$(<"$pid_file")" ]] && [[ "$(<"$pid_file")" -gt 0 ]]; then
+      echo "$(<"$pid_file")"
+    fi
+  fi
+}
+
+stop_service_using_pid() {
+    local pid_file="${1:?pid file is missing}"
+    local signal="${2:-}"
+    local pid
+
+    pid="$(get_pid_from_file "$pid_file")"
+    [[ -z "$pid" ]] || ! is_service_running "$pid" && return
+
+    info "Stopping service running in PID $pid"
+
+    if [[ -n "$signal" ]]; then
+        kill "-${signal}" "$pid"
+    else
+        kill "$pid"
+    fi
+
+    local counter=10
+    while [[ "$counter" -ne 0 ]] && is_service_running "$pid"; do
+        sleep 1
+        counter=$((counter - 1))
+        info "Waiting for service to stop..."
+    done
+
+    if is_service_running "$pid"; then
+        warn "Service running in PID $pid could not be stopped gracefully. Killing it"
+        kill -9 "$pid"
+    fi
+}
+
+
+is_ldap_not_running() {
+    ! is_ldap_running
+}
+
+is_ldap_running() {
+    local pid
+    pid="$(get_pid_from_file "${LDAP_RUN_PID_FILE}")"
+    if [[ -n "${pid}" ]]; then
+        is_service_running "${pid}"
+    else
+        false
+    fi
+}

@@ -1,0 +1,26 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+
+info "Create directory if not exists"
+
+ensure_dir_exists "$LDAP_SHARE_DIR"
+ensure_dir_exists "$LDAP_DB_DIR"
+ensure_dir_exists "$LDAP_CONFIG_DIR"
+ensure_dir_exists "$LDAP_RUN_DIR"
+ensure_dir_exists "$LDAP_LDIF_TEMPLATE_DIR"
+
+info "Create files if not exists and set permissions"
+
+info "Create link to $LDAP_TLS_CRT_DIR"
+
+
+ln -sf "$LDAP_TLS_VOLUME_DIR" "$LDAP_TLS_CRT_DIR"
+#chown -R openldap:openldap "$LDAP_TLS_CRT_DIR"
+#chmod -R 700 "$LDAP_TLS_CRT_DIR"
+
+

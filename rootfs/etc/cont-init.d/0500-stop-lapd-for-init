@@ -1,0 +1,23 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+info "Stop slapd for init..."
+
+if is_ldap_running; then
+    stop_service_using_pid "$LDAP_RUN_PID_FILE"
+fi
+
+info "Stop slapd for init done."
+
+if is_not_initialized; then
+  mark_initialized
+fi
+
+
+

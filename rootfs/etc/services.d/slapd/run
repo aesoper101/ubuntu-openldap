@@ -1,0 +1,18 @@
+#!/usr/bin/with-contenv bash
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+# run slapd
+# shellcheck disable=SC2086
+#exec /usr/sbin/slapd -h "ldap:/// ldaps:/// ldapi:///" -u openldap -g openldap -d $LDAP_LOG_LEVEL -F $LDAP_CONFIG_DIR -f ${LDAP_CONFIG_DIR}/slapd.conf
+
+if is_ldap_not_running; then
+    info "Starting slapd..."
+
+    /usr/sbin/slapd -h "ldap:/// ldaps:/// ldapi:///" -u openldap -g openldap -d $LDAP_LOG_LEVEL &
+
+    info "Starting slapd done."
+fi

@@ -1,0 +1,19 @@
+#!/usr/bin/with-contenv bash
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+
+is_not_initialized() {
+  if [[ -f "$LDAP_INSTALL_LOCK" ]]; then
+    false
+  else
+    true
+  fi
+}
+
+mark_initialized() {
+  touch "$LDAP_INSTALL_LOCK"
+}
+
+
