@@ -3,36 +3,30 @@
 source /assets/functions/setenv
 source /assets/functions/common
 source /assets/functions/log-utils
+source /assets/functions/ldap
 
 LDAP_OPENLDAP_UID=${LDAP_OPENLDAP_UID:-911}
 LDAP_OPENLDAP_GID=${LDAP_OPENLDAP_GID:-911}
 
-if [ -z "${LDAP_OPENLDAP_GID}" ]; then
-  groupadd -g 911 -r openldap
-else
-  groupadd -r -g "${LDAP_OPENLDAP_GID}" openldap
-fi
-
-if [ -z "${LDAP_OPENLDAP_UID}" ]; then
-  useradd -u 911 -r -g openldap openldap
-else
-  useradd -r -g openldap -u "${LDAP_OPENLDAP_UID}" openldap
-fi
-
-info "get current openldap uid/gid info inside container"
-CUR_USER_UID=$(id -u openldap)
-CUR_USER_GID=$(id -g openldap)
-
 LDAP_UIDGID_CHANGED=false
-if [ "$LDAP_OPENLDAP_UID" != "$CUR_USER_UID" ]; then
-  info "change openldap uid from $CUR_USER_UID to $LDAP_OPENLDAP_UID"
-  usermod -o -u "$LDAP_OPENLDAP_UID" openldap
-  LDAP_UIDGID_CHANGED=true
-fi
-if [ "$LDAP_OPENLDAP_GID" != "$CUR_USER_GID" ]; then
-  info "change openldap gid from $CUR_USER_GID to $LDAP_OPENLDAP_GID"
-  groupmod -o -g "$LDAP_OPENLDAP_GID" openldap
-  LDAP_UIDGID_CHANGED=true
+
+info "Set uid and gid for openldap user and group"
+
+if is_not_initialized; then
+  info "get current openldap uid/gid info inside container"
+  CUR_USER_UID=$(id -u openldap)
+  CUR_USER_GID=$(id -g openldap)
+
+  if [ "$LDAP_OPENLDAP_UID" != "$CUR_USER_UID" ]; then
+    info "change openldap uid from $CUR_USER_UID to $LDAP_OPENLDAP_UID"
+    usermod -o -u "$LDAP_OPENLDAP_UID" openldap
+    LDAP_UIDGID_CHANGED=true
+  fi
+  if [ "$LDAP_OPENLDAP_GID" != "$CUR_USER_GID" ]; then
+    info "change openldap gid from $CUR_USER_GID to $LDAP_OPENLDAP_GID"
+    groupmod -o -g "$LDAP_OPENLDAP_GID" openldap
+    LDAP_UIDGID_CHANGED=true
+  fi
 fi
 
 info '-------------------------------------'

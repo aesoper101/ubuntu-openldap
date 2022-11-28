@@ -1,0 +1,15 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+
+if [ ! -d "/var/log/slapd/container" ]; then
+  info "Creating directory /var/log/slapd/container"
+
+  mkdir -p /var/log/slapd/container
+  chown nobody:nogroup /var/log/slapd/container
+  chmod 02755 /var/log/slapd/container
+fi

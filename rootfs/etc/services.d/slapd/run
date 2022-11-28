@@ -10,9 +10,16 @@ source /assets/functions/ldap
 #exec /usr/sbin/slapd -h "ldap:/// ldaps:/// ldapi:///" -u openldap -g openldap -d $LDAP_LOG_LEVEL -F $LDAP_CONFIG_DIR -f ${LDAP_CONFIG_DIR}/slapd.conf
 
 if is_ldap_not_running; then
-    info "Starting slapd..."
+  info "Starting slapd..."
 
-    /usr/sbin/slapd -h "ldap:/// ldaps:/// ldapi:///" -u openldap -g openldap -d $LDAP_LOG_LEVEL &
+  #    /usr/sbin/slapd -h "ldap:/// ldaps:/// ldapi:///" -u openldap -g openldap -d $LDAP_LOG_LEVEL &
 
-    info "Starting slapd done."
+  ulimit -n "${LDAP_NOFILE:-1024}"
+
+  #  FQDN="$(/bin/hostname --fqdn)"
+  FQDN="$(/bin/hostname)"
+  HOST_PARAM="ldap://$FQDN:389 ldaps://$FQDN:636"
+  /usr/sbin/slapd -h "$HOST_PARAM ldapi:///" -u openldap -g openldap -d "${LDAP_LOG_LEVEL:-256}"
+  # slapd -h "ldap:/// ldaps:/// ldapi:///" -u openldap -g openldap -d "$LDAP_LOG_LEVEL"
+  info "Starting slapd done."
 fi

@@ -1,0 +1,28 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+if is_not_initialized; then
+  info "add admin acl"
+
+  ADMIN_USER_DN="cn=${LDAP_ADMIN_USERNAME},${LDAP_BASE_DN}"
+
+  ldapmodify -Q -Y EXTERNAL -H ldapi:/// <<EOF
+dn: olcDatabase={1}${LDAP_BACKEND},cn=config
+changetype: modify
+delete: olcAccess
+-
+add: olcAccess
+olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break
+olcAccess: {1}to attrs=userPassword,shadowLastChange by self write by dn="${ADMIN_USER_DN}" write by anonymous auth by * none
+olcAccess: {2}to * by self read by dn="${ADMIN_USER_DN}" write by * none
+EOF
+
+  info "add admin acl done"
+
+fi

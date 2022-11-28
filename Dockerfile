@@ -1,5 +1,9 @@
-FROM aesoper/ubuntu-s6-overlay:1.0.4
+FROM aesoper/ubuntu-s6-overlay:v1.0.6
 MAINTAINER "aesoper" <weilanzhuan@163.com>
+
+
+ARG PQCHECKER_VERSION=2.0.0
+ARG PQCHECKER_MD5=c005ce596e97d13e39485e711dcbc7e1
 
 
 ARG OPENLDAP_PACKAGE_VERSION=2.5.13
@@ -7,36 +11,23 @@ ARG OPENLDAP_PACKAGE_VERSION=2.5.13
 ARG LDAP_OPENLDAP_GID
 ARG LDAP_OPENLDAP_UID
 
-#RUN if [ -z "${LDAP_OPENLDAP_GID}" ]; then groupadd -g 911 -r openldap; else groupadd -r -g ${LDAP_OPENLDAP_GID} openldap; fi \
-#    && if [ -z "${LDAP_OPENLDAP_UID}" ]; then useradd -u 911 -r -g openldap openldap; else useradd -r -g openldap -u ${LDAP_OPENLDAP_UID} openldap; fi
-
-
 # set s6-overlay environment variables
-ENV S6_CMD_WAIT_FOR_SERVICES_MAXTIME 0
-
-ENV LDAP_ORGANISATION="Example Inc" \
-    LDAP_DOMAIN=example.org \
-    LDAP_BASE_DN="" \
-    LDAP_ADMIN_PASSWORD=admin \
-    LDAP_CONFIG_PASSWORD=admin \
-    LDAP_READONLY_USER=true \
-    LDAP_READONLY_USER_USERNAME=readonly \
-    LDAP_READONLY_USER_PASSWORD=readonly \
-    LDAP_BACKEND=mdb \
-    LANG=C.UTF-8 \
-    LDAP_TLS_ENABLED=true \
-    LDAP_TLS_CRT_FILENAME=cert.crt \
-    LDAP_TLS_KEY_FILENAME=cert.key \
-    LDAP_TLS_CA_CRT_FILENAME=ca.crt \
-#    LDAP_TLS_CA_KEY_FILENAME=ca.key \
-    LDAP_TLS_DH_PARAM_FILENAME=dhparam.pem \
-    LDAP_HOSTNAME=ldap
+ENV S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0 \
+    S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
+    S6_LOGGING=1 \
+    S6_VERBOSITY=0
 
 
-RUN apt-get update
+ENV YQ_VERSION=v4.30.5 \
+    YQ_BINARY=yq_linux_amd64
+
+RUN if [ -z "${LDAP_OPENLDAP_GID}" ]; then groupadd -g 911 -r openldap; else groupadd -r -g ${LDAP_OPENLDAP_GID} openldap; fi \
+    && if [ -z "${LDAP_OPENLDAP_UID}" ]; then useradd -u 911 -r -g openldap openldap; else useradd -r -g openldap -u ${LDAP_OPENLDAP_UID} openldap; fi
+
 
 # install openldap \
-RUN LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
+RUN apt-get update && LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    wget \
     python3 \
     python3-pip \
     net-tools \
@@ -52,21 +43,27 @@ RUN LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libsasl2-modules-sql \
     krb5-kdc-ldap \
     krb5-admin-server \
-    openssh-server \
     schema2ldif && \
-    pip3 install shyaml && \
+    wget --no-check-certificate https://meddeb.net/pub/pqchecker/deb/8/pqchecker_${PQCHECKER_VERSION}_amd64.deb -O pqchecker.deb && \
+    echo "${PQCHECKER_MD5} pqchecker.deb" | md5sum -c && \
+    dpkg -i pqchecker.deb && \
+    rm pqchecker.deb && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     rm -rf /var/lib/ldap /etc/ldap/slapd.d
 
-#FROM python:3
-#RUN pip install --upgrade pip && pip install shyaml
+RUN wget https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/${YQ_BINARY}.tar.gz -O - |\
+      tar xz && mv ${YQ_BINARY} /usr/bin/yq
+
+#RUN  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CC86BB64 && \
+#     add-apt-repository ppa:rmescandon/yq && \
+#     apt-get update && \
+#     apt-get install -y yq
 
 ADD ./rootfs /
 
-
-
-#VOLUME ["/etc/ldap/slapd.d", "/etc/ldap/ssl", "/var/lib/ldap", "/var/run/slapd", "/etc/ldap/schema", /assets/tls]
+#VOLUME ["/assets/config"]
+#VOLUME ["/etc/ldap/slapd.d", "/var/lib/ldap", "/var/run/slapd", "/etc/ldap/schema", "/assets/certs", "/assets/config"]
 
 EXPOSE 389 636
 

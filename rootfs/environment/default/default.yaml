@@ -1,0 +1,74 @@
+LDAP_DOMAIN: example.org
+LDAP_BASE_DN: dc=example,dc=org
+LDAP_ORGANISATION: Example Inc.
+
+# admin
+LDAP_ADMIN_USERNAME: admin
+LDAP_ADMIN_PASSWORD: admin
+
+# config
+LDAP_CONFIG_PASSWORD: config
+
+# readonly user for the database
+LDAP_READONLY_USER_ENABLED: true
+LDAP_READONLY_USER_USERNAME: readonly
+LDAP_READONLY_USER_PASSWORD: readonly
+
+# backend
+LDAP_BACKEND: "mdb"
+
+# TLS
+LDAP_TLS_ENABLED: false
+LDAP_TLS_CRT_FILENAME: server.pem
+LDAP_TLS_KEY_FILENAME: server-key.pem
+LDAP_TLS_CA_CRT_FILENAME: ca.pem
+LDAP_TLS_VERIFY_CLIENT: never
+LDAP_TLS_CIPHER_SUITE: SECURE256:+SECURE128:-VERS-TLS-ALL:+VERS-TLS1.2:-RSA:-DHE-DSS:-CAMELLIA-128-CBC:-CAMELLIA-256-CBC
+LDAP_TLS_DH_PARAM_FILENAME: dhparam.pem
+
+# LDAP_TLS_SHARE_CA_CERTIFICATES if true, the ca certificates are copied to the /usr/local/share/ca-certificates directory and the update-ca-certificates command is executed
+LDAP_TLS_SHARE_CA_CERTIFICATES: true
+# if true, LDAP_TLS_PROVIDER_URI is set to ldaps://ldap.example.com:636
+LDAP_TLS_LDAP_TLS_IS_CLIENT: true
+# URI of the TLS provider (e.g. ldaps://ldap.example.com:636 ldaps://ldap2.example.com:636), if not set, the FQDN of the container is used.
+# eg.
+# LDAP_TLS_PROVIDER_URI:
+#    - ldaps://ldap.example.com:636
+#    - ldaps://ldap2.example.com:636
+LDAP_TLS_PROVIDER_URI:
+#  - ldaps://ldap.example.com:636
+
+# hostname
+LDAP_HOSTNAME: "ldap"
+
+# replicator
+LDAP_REPLICATION_USE_ENABLER: true
+LDAP_REPLICATION_USERNAME: replicator
+LDAP_REPLICATION_PASSWORD: replicator
+LDAP_REPLICATION_ENABLED: true
+LDAP_REPLICATION_MASTER: true
+# more than one consumer host, use comma to separate
+# eg.
+# LDAP_REPLICATION_CONSUMER_HOSTS:
+#    - ldap2.example.com
+#    - ldap3.example.com
+#LDAP_REPLICATION_CONSUMER_HOSTS:
+# values: SyncRepl, MultiMaster、MirrorMode、 Proxy、Delta
+LDAP_REPLICATION_MODE: SyncRepl
+
+#LDAP_REPLICATION_SYNCREPL:
+
+
+# log
+LDAP_LOG_LEVEL: 256
+
+# auditlog
+LDAP_AUDIT_LOG_ENABLED: true
+
+# dyngroup
+LDAP_DYNGROUP_ENABLED: true
+
+# disable anonymous access
+LDAP_ANONYMOUS_ACCESS_DISABLE: false
+
+LDAP_SERVER_ID: 100

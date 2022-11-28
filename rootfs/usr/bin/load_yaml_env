@@ -1,0 +1,149 @@
+#!/bin/bash
+
+set -e
+
+source /assets/functions/common
+source /assets/functions/log-utils
+
+# This script is used to get environment variables from yaml file.
+
+usage() {
+  echo "Usage: yaml_env [OPTIONS]
+
+  yaml_env - get environment variables from yaml file.
+
+  OPTIONS:
+
+    -h --help  Show this help message and exit.
+    -p --path  The path to the yaml file to get environment variables from.
+    -i --ignore  The environment variables to ignore.
+ "
+}
+
+read_one() {
+  while [ "$1" ]; do
+    IFS=$'\0' read -r -d '' "$1" || return 1
+    shift
+  done
+}
+
+_YAML_PATHS=()
+_INGNORE_SAVE_TO_ENV=()
+
+get_shell_env() {
+  local yaml_file_rep=""
+
+  for yaml_path in "${_YAML_PATHS[@]}"; do
+    if [ ! -e "$yaml_path" ]; then
+      error "$yaml_path does not exist."
+      exit 1
+    fi
+
+    if [ ! -d "$yaml_path" ]; then
+      warn "$yaml_path is not a directory."
+      continue
+    fi
+
+    if is_dir_empty "$yaml_path"; then
+      continue
+    fi
+
+    yaml_file_rep="$yaml_file_rep $yaml_path/*.yaml"
+  done
+
+  echo "yaml_file_rep: $yaml_file_rep"
+  # shellcheck disable=SC2016
+  output=$(yq eval-all '... comments="" | . as $item ireduce ({}; . * $item )' -o=props $yaml_file_rep)
+
+  while read -r line; do
+    key=$(echo "$line" | awk -F ' = ' '{print $1}' | tr -d ' ' | tr -t '.' '_' | tr '[:lower:]' '[:upper:]')
+    value=$(echo "$line" | awk -F ' = ' '{print $2}')
+
+    # if the key or value is empty, skip it
+    if [ -z "$key" ] || [ -z "$value" ]; then
+      # warn "The key or value  is empty, skip it."
+      continue
+    fi
+
+    # if key contains dot, skip it
+    #    if [[ "$key" == *.* ]]; then
+    #      warn "Key $key contains dot, skip it."
+    #      continue
+    #    fi
+
+    # if the key is in the ignore list, skip it
+    # shellcheck disable=SC2199
+    # shellcheck disable=SC2076
+    if [[ " ${_INGNORE_SAVE_TO_ENV[@]} " =~ " ${key} " ]]; then
+      continue
+    fi
+
+    # if the key is already in the environment, skip it
+    if [ -n "${!key}" ]; then
+      continue
+    fi
+
+    #    echo "export $key=$value"
+    export "${key}"="$value"
+  done <<<"$output"
+
+}
+
+# Parse command line arguments
+parse_args() {
+  local -r _ARGS=$(getopt -o hp:i: -l help,path:,ignore: -- "$@")
+
+  local path_count=0
+  local ignore_count=0
+  #  local env_count=0
+
+  # if not get any arguments, then exit
+  if [ $# -eq 0 ]; then
+    usage
+    exit 1
+  fi
+
+  eval set -- "$_ARGS"
+
+  while true; do
+    case "$1" in
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -p | --path)
+      _YAML_PATHS[$path_count]="$2"
+      path_count=$((path_count + 1))
+      shift 2
+      ;;
+    -i | --ignore)
+      _INGNORE_SAVE_TO_ENV[$ignore_count]="$2"
+      ignore_count=$((ignore_count + 1))
+      shift 2
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      error "Invalid argument: $1"
+      usage
+      exit 1
+      ;;
+    esac
+  done
+
+  if [ ${#_YAML_PATHS[@]} -eq 0 ]; then
+    error "error: yaml file path is required"
+    exit 1
+  fi
+
+  get_shell_env
+
+  _INGNORE_SAVE_TO_ENV=()
+  _YAML_PATHS=()
+}
+
+parse_args "$@"
+
+set +x

@@ -1,0 +1,67 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+if is_not_initialized && [ ! -f "$LDAP_REPLICATION_INSTALL_LOCK_FILE" ]; then
+  if is_boolean_yes "$LDAP_REPLICATION_ENABLED" && [ "$LDAP_REPLICATION_MODE" = "SyncRepl" ]; then
+    info "Enable syncrepl replication"
+
+    if is_boolean_yes "$LDAP_REPLICATION_MASTER"; then
+      info "Enable syncrepl replication as master"
+
+      cat <<EOF | ldapmodify -Q -Y EXTERNAL -H ldapi:///
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: syncprov
+
+dn: olcOverlay=syncprov,olcDatabase={1}${LDAP_BACKEND},cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcSyncProvConfig
+olcOverlay: syncprov
+olcSpCheckpoint: 1 1
+olcSpSessionLog: 1024
+EOF
+
+      info "Enable syncrepl replication as master done"
+    else
+      info "Enable syncrepl replication as slave"
+
+      if [ -z "${LDAP_REPLICATION_DB_SYNC_REPL}" ]; then
+        error "LDAP_REPLICATION_DB_SYNC_REPL is required"
+        exit 1
+      fi
+
+      if [ -z "${LDAP_REPLICATION_CONFIG_SYNC_REPL}" ]; then
+        error "LDAP_REPLICATION_CONFIG_SYNC_REPL is required"
+        exit 1
+      fi
+
+
+      cat <<EOF | ldapmodify -Q -Y EXTERNAL -H ldapi:///
+dn: olcDatabase={1}${LDAP_BACKEND},cn=config
+changetype: modify
+add: olcSyncRepl
+olcSyncRepl: ${LDAP_REPLICATION_DB_SYNC_REPL}
+EOF
+
+      info "Enable syncrepl replication as slave done"
+
+    fi
+
+    touch "$LDAP_REPLICATION_INSTALL_LOCK_FILE"
+  fi
+
+fi
+
+#ldapsearch -H ldap://ldap:389  -x -D "cn=admin,dc=example,dc=org" -w "admin"  -LLL  -b "dc=example,dc=org"
+#ldapsearch -H ldap://ldap:389  -x -D "cn=replicator,dc=example,dc=org" -w "replicator"  -LLL  -b "dc=example,dc=org"
+#ldapsearch -H ldap://ldap01:389  -x -D "cn=admin,dc=example,dc=org" -w "admin"  -LLL  -b "dc=example,dc=org"
+#ldapsearch -H ldap://ldap  -x -D "cn=replicator,dc=example,dc=org" -w "replicator"  -LLL  -b "dc=example,dc=org"
+#ldapsearch -H ldap://ldap01.example.org:389  -x -D "cn=admin,dc=example,dc=org" -w "admin"  -LLL  -b "dc=example,dc=org"

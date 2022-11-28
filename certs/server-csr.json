@@ -1,0 +1,31 @@
+{
+    "CN": "example.org",
+    "hosts": [
+        "127.0.0.1",
+        "ldap",
+        "example.org",
+        "www.example.org",
+        "ldap.example.org",
+        "https://example.org",
+        "https://www.example.org",
+        "https://ldap.example.org",
+        "ldap01.example.org",
+        "ldap02.example.org",
+        "ldap02",
+        "ldap01"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "CN",
+            "ST": "Guangdong",
+            "L": "Shenzhen",
+            "O": "example",
+            "OU": "ldap"
+        }
+    ]
+}
+

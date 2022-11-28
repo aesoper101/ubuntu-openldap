@@ -1,6 +1,5 @@
-#!/usr/bin/with-contenv bash
+#!/bin/bash
 
-source /assets/functions/setenv
 source /assets/functions/log-utils
 
 # Checks whether a directory is empty or not
@@ -71,7 +70,6 @@ copy_dir_file_if_exists() {
   fi
 }
 
-
 is_service_running() {
   local pid="${1:?pid is missing}"
 
@@ -89,45 +87,30 @@ get_pid_from_file() {
 }
 
 stop_service_using_pid() {
-    local pid_file="${1:?pid file is missing}"
-    local signal="${2:-}"
-    local pid
+  local pid_file="${1:?pid file is missing}"
+  local signal="${2:-}"
+  local pid
 
-    pid="$(get_pid_from_file "$pid_file")"
-    [[ -z "$pid" ]] || ! is_service_running "$pid" && return
+  pid="$(get_pid_from_file "$pid_file")"
+  [[ -z "$pid" ]] || ! is_service_running "$pid" && return
 
-    info "Stopping service running in PID $pid"
+  info "Stopping service running in PID $pid"
 
-    if [[ -n "$signal" ]]; then
-        kill "-${signal}" "$pid"
-    else
-        kill "$pid"
-    fi
+  if [[ -n "$signal" ]]; then
+    kill "-${signal}" "$pid"
+  else
+    kill "$pid"
+  fi
 
-    local counter=10
-    while [[ "$counter" -ne 0 ]] && is_service_running "$pid"; do
-        sleep 1
-        counter=$((counter - 1))
-        info "Waiting for service to stop..."
-    done
+  local counter=10
+  while [[ "$counter" -ne 0 ]] && is_service_running "$pid"; do
+    sleep 1
+    counter=$((counter - 1))
+    info "Waiting for service to stop..."
+  done
 
-    if is_service_running "$pid"; then
-        warn "Service running in PID $pid could not be stopped gracefully. Killing it"
-        kill -9 "$pid"
-    fi
-}
-
-
-is_ldap_not_running() {
-    ! is_ldap_running
-}
-
-is_ldap_running() {
-    local pid
-    pid="$(get_pid_from_file "${LDAP_RUN_PID_FILE}")"
-    if [[ -n "${pid}" ]]; then
-        is_service_running "${pid}"
-    else
-        false
-    fi
+  if is_service_running "$pid"; then
+    warn "Service running in PID $pid could not be stopped gracefully. Killing it"
+    kill -9 "$pid"
+  fi
 }

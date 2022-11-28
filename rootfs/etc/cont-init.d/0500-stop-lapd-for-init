@@ -9,6 +9,7 @@ source /assets/functions/ldap
 
 info "Stop slapd for init..."
 
+
 if is_ldap_running; then
     stop_service_using_pid "$LDAP_RUN_PID_FILE"
 fi

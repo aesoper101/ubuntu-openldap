@@ -1,0 +1,49 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+if is_not_initialized ; then
+   info "add memberof and refint module"
+
+    cat <<EOF | ldapadd -Q -Y EXTERNAL -H ldapi:///
+# Load memberof module
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: memberof
+-
+add: olcModuleLoad
+olcModuleLoad: refint
+
+# Backend memberOf overlay
+dn: olcOverlay={0}memberof,olcDatabase={1}${LDAP_BACKEND},cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcMemberOf
+olcOverlay: {0}memberof
+olcMemberOfDangling: ignore
+olcMemberOfRefInt: TRUE
+olcMemberOfGroupOC: groupOfUniqueNames
+olcMemberOfMemberAD: uniqueMember
+olcMemberOfMemberOfAD: memberOf
+
+# Backend refint overlay
+dn: olcOverlay={1}refint,olcDatabase={1}${LDAP_BACKEND},cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcRefintConfig
+olcOverlay: {1}refint
+olcRefintAttribute: owner
+olcRefintAttribute: manager
+olcRefintAttribute: uniqueMember
+olcRefintAttribute: member
+olcRefintAttribute: memberOf
+EOF
+
+   info "add memberof and refint module done"
+fi

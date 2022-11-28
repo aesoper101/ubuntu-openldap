@@ -1,0 +1,24 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+
+info "Create directory if not exists"
+
+ensure_dir_exists "$LDAP_SHARE_DIR"
+ensure_dir_exists "$LDAP_DB_DIR"
+ensure_dir_exists "$LDAP_CONFIG_DIR"
+ensure_dir_exists "$LDAP_RUN_DIR"
+ensure_dir_exists "$LDAP_LDAP_INSTALL_LOCK_DIR"
+ensure_dir_exists "$LDAP_CUSTOM_ENV_DIR"
+ensure_dir_exists "$LDAP_LDIF_CUSTOM_DIR"
+ensure_dir_exists "$LDAP_SCHEMA_CUSTOM_DIR"
+ensure_dir_exists "$LDAP_SHARE_LDIF_CUSTOM_DIR"
+ensure_dir_exists "$LDAP_SHARE_LDIF_BOOTSTRAP_DIR"
+ensure_dir_exists "$LDAP_TLS_CRT_DIR"
+
+info "Create files if not exists and set permissions"
+

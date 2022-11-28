@@ -1,0 +1,27 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+if is_not_initialized && [ ! -f "$LDAP_CUSTOM_LDIF_INSTALL_LOCK_FILE" ]; then
+  info "Add custom ldif to ldap"
+
+  #  $LDAP_SCHEMA_CUSTOM_DIR/*.ldif
+  # shellcheck disable=SC2231
+  for f in $LDAP_LDIF_CUSTOM_DIR/*.ldif; do
+    info "Add custom ldif to ldap: $f"
+
+    # shellcheck disable=SC2002
+    cat "$f" | sed -e "/^creatorsName: /d" -e "/^createTimestamp: /d" -e "/^entryUUID: /d" -e "/^entryCSN: /d" -e "/^modifiersName: /d" -e "/^modifyTimestamp: /d" -e "/^structuralObjectClass: /d" | ldapadd -Y EXTERNAL -H ldapi:///
+
+    info "Add custom ldif to ldap done: $f"
+  done
+
+  touch "$LDAP_CUSTOM_LDIF_INSTALL_LOCK_FILE"
+
+  info "Add custom ldif to ldap done"
+fi

@@ -1,0 +1,19 @@
+{
+    "signing": {
+        "default": {
+            "expiry": "8760h"
+        },
+        "profiles": {
+            "ldap": {
+                "expiry": "87600h",
+                "usages": [
+                    "signing",
+                    "key encipherment",
+                    "server auth",
+                    "client auth"
+                ]
+            }
+        }
+    }
+}
+

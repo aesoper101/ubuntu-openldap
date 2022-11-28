@@ -1,0 +1,46 @@
+attributeType (
+    2.3.6.1.4.1.7165.2.1.1.1
+    NAME 'userPoolId'
+	DESC 'userPoolId'
+	EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{32768}
+	SINGLE-VALUE )
+
+attributeType (
+    2.3.6.1.4.1.7165.2.1.1.2
+    NAME 'userPoolSecret'
+	DESC 'userPoolSecret'
+	EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+	SUP name
+	SINGLE-VALUE )
+
+attributeType (
+    2.3.6.1.4.1.7165.2.1.1.3
+    NAME 'userPoolNextSecret'
+	DESC 'userPoolNextSecret'
+	EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+	SUP name
+	SINGLE-VALUE )
+
+attributeType (
+    2.3.6.1.4.1.7165.2.1.1.4
+    NAME 'userPoolName'
+	DESC 'userPoolName'
+	SUP name )
+
+attributeType (
+    2.3.6.1.4.1.7165.2.1.1.5
+    NAME 'userPoolType'
+    DESC 'userPoolType'
+    SUP name )
+
+
+objectClass (
+    2.3.6.1.4.1.7165.2.1.1
+    NAME 'authingUser'
+	DESC 'authingUser'
+	SUP person STRUCTURAL
+	must ( userPoolId $ userPoolSecret $ userPoolNextSecret $ userPoolName) )

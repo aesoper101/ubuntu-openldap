@@ -1,0 +1,234 @@
+#!/bin/bash
+
+source /assets/functions/log-utils
+source /assets/functions/common
+source /assets/functions/setenv
+
+set -e
+
+usage() {
+  echo "Usage: ldap_tls [OPTIONS]
+
+ ldap_tls - Enable or disable TLS for LDAP server.
+
+ OPTIONS:
+
+      -h, --help                 Print this help message.
+      --ca_file <file>           Path to CA certificate file. if change_type is 'add' or 'replace', this option is required.
+      --cert_file  <file>        Path to certificate file. if change_type is 'add' or 'replace', this option is required.
+      --cert_key_file  <file>    Path to certificate key file. if change_type is 'add' or 'replace', this option is required.
+      --dh_file <file>           Path to DH parameter file. if change_type is 'add' or 'replace', this option is required.
+      --verify_client <value>    Verify client certificate. valid values are never, allow, try, demand. if change_type is 'add' or 'replace' and not set, default value is never.
+      --ciphers <ciphers>        List of ciphers to use.if change_type is 'add' or 'replace', this option is required. example: -ciphers 'HIGH:MEDIUM:+3DES:!aNULL'
+      --change_type <type>       Change type. valid values are add, replace, delete. if not set, default value is replace.
+      --base_dn <dn>             Base DN. if rewrite_config is true, this option is required. eg: --base_dn 'dc=example,dc=com'
+      --uri <uri>                LDAP URI. if rewrite_config is true, this option is required. eg: --uri 'ldap://ldap.example.com ldap://ldap-master.example.com'
+      --rewrite_conf <value>     Rewrite ldap.conf file. if change_type is 'add' or 'replace', this option is required. valid values are yes, no. eg: --rewrite_conf 'yes'.
+  "
+}
+
+check_file() {
+  local FILE_PATH="$2"
+  local FILE_NAME="$1"
+
+  if [ -z "$FILE_PATH" ]; then
+    error "$FILE_NAME File is required"
+    exit 1
+  fi
+
+  if [ ! -f "$FILE_PATH" ]; then
+    error "$FILE_NAME File $1 does not exist"
+    exit 1
+  fi
+}
+
+ldap_disable_tls() {
+  info "Disabling TLS for LDAP server"
+
+  cat <<EOF | ldapmodify -Y EXTERNAL -H ldapi:///
+dn: cn=config
+changetype: modify
+delete: olcTLSCipherSuite
+-
+delete: olcTLSCACertificateFile
+-
+delete: olcTLSCertificateFile
+-
+delete: olcTLSCertificateKeyFile
+-
+delete: olcTLSDHParamFile
+-
+delete: olcTLSVerifyClient
+EOF
+
+  info "TLS for LDAP server disabled successfully"
+  warn "If it is not running when the LDAP server is initialized, you need to restart the container to apply the changes"
+}
+
+ldap_enable_tls() {
+  info "Enabling TLS for LDAP server"
+
+  local -r CA_FILE="$1"
+  local -r CERT_FILE="$2"
+  local -r CERT_KEY_FILE="$3"
+  local -r DH_FILE="$4"
+  local -r VERIFY_CLIENT="$5"
+  local -r CIPHERS="$6"
+  local -r CHANGE_TYPE="$7"
+
+  cat <<EOF | ldapmodify -Y EXTERNAL -H ldapi:///
+dn: cn=config
+changetype: modify
+${CHANGE_TYPE}: olcTLSCipherSuite
+olcTLSCipherSuite:${CIPHERS}
+-
+${CHANGE_TYPE}: olcTLSCACertificateFile
+olcTLSCACertificateFile: ${CA_FILE}
+-
+${CHANGE_TYPE}: olcTLSCertificateFile
+olcTLSCertificateFile: ${CERT_FILE}
+-
+${CHANGE_TYPE}: olcTLSCertificateKeyFile
+olcTLSCertificateKeyFile: ${CERT_KEY_FILE}
+-
+${CHANGE_TYPE}: olcTLSDHParamFile
+olcTLSDHParamFile: ${DH_FILE}
+-
+${CHANGE_TYPE}: olcTLSVerifyClient
+olcTLSVerifyClient: ${VERIFY_CLIENT}
+EOF
+
+  # write to ldap.conf
+
+  info "TLS enabled for LDAP server"
+  warn "If it is not running when the LDAP server is initialized, you need to restart the container to apply the changes"
+}
+
+parse_args() {
+  local CA_FILE=""
+  local CERT_FILE=""
+  local CERT_KEY_FILE=""
+  local DH_FILE=""
+  local VERIFY_CLIENT="never"
+  local CIPHERS=""
+  local CHANGE_TYPE="replace"
+  local BASE_DN=""
+  local URI=""
+  local REWRITE_CONF="yes"
+
+  local -r ARGS=$(getopt -o h --long help,ca_file:,cert_file:,cert_key_file:,ciphers:,change_type:,verify_client:,dh_file:,base_dn:,rewrite_conf:,uri:, -n 'ldap_tls' -- "$@")
+
+  eval set -- "$ARGS"
+
+  while true; do
+    case "$1" in
+    -h | --help)
+      usage
+      exit 0
+      shift
+      ;;
+    --ca_file)
+      CA_FILE="$2"
+      shift 2
+      ;;
+    --cert_file)
+      CERT_FILE="$2"
+      shift 2
+      ;;
+    --cert_key_file)
+      CERT_KEY_FILE="$2"
+      shift 2
+      ;;
+    --dh_file)
+      DH_FILE="$2"
+      shift 2
+      ;;
+    --verify_client)
+      VERIFY_CLIENT="$2"
+      shift 2
+      ;;
+    --ciphers)
+      CIPHERS="$2"
+      shift 2
+      ;;
+    --change_type)
+      CHANGE_TYPE="$2"
+      shift 2
+      ;;
+    --base_dn)
+      BASE_DN="$2"
+      shift 2
+      ;;
+    --uri)
+      URI="$2"
+      shift 2
+      ;;
+    --rewrite_conf)
+      REWRITE_CONF="$2"
+      shift 2
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      usage
+      break
+      ;;
+    esac
+  done
+
+  if [ "$CHANGE_TYPE" != "add" ] && [ "$CHANGE_TYPE" != "replace" ] && [ "$CHANGE_TYPE" != "delete" ]; then
+    error "Invalid change type: $CHANGE_TYPE"
+    exit 1
+  fi
+
+  # if change type is modify or add, enable tls
+  if [ "$CHANGE_TYPE" == "replace" ] || [ "$CHANGE_TYPE" == "add" ]; then
+    check_file "CA certificate file" "$CA_FILE"
+    check_file "Certificate file" "$CERT_FILE"
+    check_file "Certificate key file" "$CERT_KEY_FILE"
+    check_file "DH parameter file" "$DH_FILE"
+
+    if [ -z "$CIPHERS" ]; then
+      error "Ciphers list is required"
+      exit 1
+    fi
+
+    if [ "$VERIFY_CLIENT" != "never" ] && [ "$VERIFY_CLIENT" != "allow" ] && [ "$VERIFY_CLIENT" != "try" ] && [ "$VERIFY_CLIENT" != "demand" ]; then
+      error "Invalid value for verify client"
+      exit 1
+    fi
+
+    ldap_enable_tls "$CA_FILE" "$CERT_FILE" "$CERT_KEY_FILE" "$DH_FILE" "$VERIFY_CLIENT" "$CIPHERS" "$CHANGE_TYPE"
+
+    if is_boolean_yes "$REWRITE_CONF"; then
+      cp -f "$LDAP_ETC_CONF_FILE" "$LDAP_ETC_CONF_FILE_BACKUP"
+
+      sed -e "s,^TLS_CACERT.*,TLS_CACERT ${CA_FILE},g" \
+        -e "s,^#URI.*,URI ${URI},g" \
+        -e "s/^#BASE.*/BASE ${BASE_DN}/g" \
+        -e "s,^#TLS_REQCERT.*,TLS_REQCERT ${VERIFY_CLIENT},g" \
+        "$LDAP_ETC_CONF_FILE_BACKUP" >"$LDAP_ETC_CONF_FILE"
+
+      grep -q '^TLS_REQCERT=' "$LDAP_ETC_CONF_FILE" || echo "TLS_REQCERT=${VERIFY_CLIENT}" >>"$LDAP_ETC_CONF_FILE"
+    fi
+
+  else
+    ldap_disable_tls
+
+    if is_boolean_yes "$REWRITE_CONF"; then
+
+      _DEFAULT_CA_FILE="/etc/ssl/certs/ca-certificates.crt"
+
+      cp -f "$LDAP_ETC_CONF_FILE" "$LDAP_ETC_CONF_FILE_BACKUP"
+      sed -e "s,^TLS_CACERT.*,$_DEFAULT_CA_FILE,g" \
+        -e "s,^URI.*,#URI,g" \
+        -e "s/^BASE.*/#BASE/g" \
+        -e "s,^TLS_REQCERT.*,#TLS_REQCERT ${VERIFY_CLIENT},g" \
+        "$LDAP_ETC_CONF_FILE_BACKUP" >"$LDAP_ETC_CONF_FILE"
+    fi
+  fi
+}
+
+parse_args "$@"

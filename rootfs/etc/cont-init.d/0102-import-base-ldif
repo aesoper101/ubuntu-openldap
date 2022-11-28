@@ -1,0 +1,26 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+if is_not_initialized; then
+  info "import base ldif"
+
+  ldapadd -Y EXTERNAL -H ldapi:/// -f ${LDAP_SCHEMA_DIR}/duaconf.ldif
+  ldapadd -Y EXTERNAL -H ldapi:/// -f ${LDAP_SCHEMA_DIR}/collective.ldif
+  ldapadd -Y EXTERNAL -H ldapi:/// -f ${LDAP_SCHEMA_DIR}/corba.ldif
+  ldapadd -Y EXTERNAL -H ldapi:/// -f ${LDAP_SCHEMA_DIR}/dsee.ldif
+  ldapadd -Y EXTERNAL -H ldapi:/// -f ${LDAP_SCHEMA_DIR}/dyngroup.ldif
+  ldapadd -Y EXTERNAL -H ldapi:/// -f ${LDAP_SCHEMA_DIR}/java.ldif
+  ldapadd -Y EXTERNAL -H ldapi:/// -f ${LDAP_SCHEMA_DIR}/misc.ldif
+  #  ldapadd -Y EXTERNAL -H ldapi:/// -f ${LDAP_SCHEMA_DIR}/msuser.ldif
+  ldapadd -Y EXTERNAL -H ldapi:/// -f ${LDAP_SCHEMA_DIR}/namedobject.ldif
+  ldapadd -Y EXTERNAL -H ldapi:/// -f ${LDAP_SCHEMA_DIR}/pmi.ldif
+  ldapadd -Y EXTERNAL -H ldapi:/// -f ${LDAP_SCHEMA_DIR}/openldap.ldif
+
+  info "import base ldif done"
+fi

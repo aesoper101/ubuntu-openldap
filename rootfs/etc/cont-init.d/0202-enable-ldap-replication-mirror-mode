@@ -1,0 +1,120 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+if is_not_initialized && [ ! -f "$LDAP_REPLICATION_INSTALL_LOCK_FILE" ]; then
+  if is_boolean_yes "$LDAP_REPLICATION_ENABLED" && [ "$LDAP_REPLICATION_MODE" = "MirrorMode" ]; then
+
+    info "enable replication MirrorMode"
+
+    LDAP_REPLICATION_DB_SYNC_REPL_PLACEHOLDER="{{ LDAP_REPLICATION_DB_SYNC_REPL_PLACEHOLDER }}"
+
+    count=0
+    NODE_SERVER_ID=""
+    while true; do
+      host="LDAP_REPLICATION_HOSTS_${count}"
+      if [ -z "${!host}" ]; then
+        error "LDAP_REPLICATION_HOSTS[${count}] is empty"
+        exit 1
+      fi
+
+      SERVER_ID=$((100 + count))
+
+      _hostname=$(echo "${!host}" | sed -e "s|.*//||g" | sed -e "s|:.*||g")
+      _FQDN="$(/bin/hostname --fqdn)"
+      _HOSTNAME="$(/bin/hostname)"
+
+      if [ "${_hostname}" = "${_FQDN}" ] || [ "${_hostname}" = "${_HOSTNAME}" ]; then
+        info "Found node server id: ${SERVER_ID}"
+        NODE_SERVER_ID="${SERVER_ID}"
+      else
+        DB_SYNC_RID=$((100 + count))
+        ENV_DB_SYNC_REPL_VALUE=$(echo "{{ PLACEHOLDER }} ${LDAP_REPLICATION_DB_SYNC_REPL}" | sed -e "s|rid=\S*\s*||g" | sed -e "s|provider=\S*\s*||g" | sed -e "s|{{ PLACEHOLDER }}|rid=${DB_SYNC_RID} provider=${!host}|g")
+        # shellcheck disable=SC2001
+        LDAP_REPLICATION_DB_SYNC_REPL_PLACEHOLDER=$(echo "${LDAP_REPLICATION_DB_SYNC_REPL_PLACEHOLDER}" | sed -e "s|{{ LDAP_REPLICATION_DB_SYNC_REPL_PLACEHOLDER }}|olcSyncRepl: ${ENV_DB_SYNC_REPL_VALUE}\n{{ LDAP_REPLICATION_DB_SYNC_REPL_PLACEHOLDER }}|g")
+      fi
+
+      count=$((count + 1))
+      next_host="LDAP_REPLICATION_HOSTS_${count}"
+      if [ -z "${!next_host}" ]; then
+        break
+      fi
+
+    done
+
+    if [ -z "${NODE_SERVER_ID}" ]; then
+      error "NODE_SERVER_ID is empty"
+      exit 1
+    fi
+
+    info "[${HOSTNAME}]NODE_SERVER_ID: ${NODE_SERVER_ID}"
+
+    LDAP_REPLICATION_DB_SYNC_REPL_PLACEHOLDER=$(echo "${LDAP_REPLICATION_DB_SYNC_REPL_PLACEHOLDER}" | sed -e "/{{ LDAP_REPLICATION_DB_SYNC_REPL_PLACEHOLDER }}/d")
+
+    if [ -z "${LDAP_REPLICATION_DB_SYNC_REPL_PLACEHOLDER}" ]; then
+      error "LDAP_REPLICATION_DB_SYNC_REPL_PLACEHOLDER is empty"
+      exit 1
+    fi
+
+    info "enable syncprov module"
+
+    cat <<EOF | ldapmodify -Q -Y EXTERNAL -H ldapi:///
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: syncprov
+EOF
+
+    info "enable syncprov module done"
+
+    info "set olcServerID"
+
+    cat <<EOF | ldapmodify -Q -Y EXTERNAL -H ldapi:///
+dn: cn=config
+changeType: modify
+add: olcServerID
+olcServerID: ${NODE_SERVER_ID}
+EOF
+
+    info "set olcServerID done"
+
+    info "Add olcOverlay=syncprov to database"
+    cat <<EOF | ldapmodify -Q -Y EXTERNAL -H ldapi:///
+dn: olcOverlay=syncprov,olcDatabase={1}${LDAP_BACKEND},cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcSyncProvConfig
+olcOverlay: syncprov
+EOF
+
+    # shellcheck disable=SC2181
+    if [ $? -ne 0 ]; then
+      error "Error executing ..."
+      exit 1
+    fi
+
+    info "Add olcOverlay=syncprov to database done"
+
+    info "Add SyncRepl to the database"
+
+    cat <<EOF | ldapmodify -Q -Y EXTERNAL -H ldapi:///
+dn: olcDatabase={1}${LDAP_BACKEND},cn=config
+changetype: modify
+add: olcSyncRepl
+${LDAP_REPLICATION_DB_SYNC_REPL_PLACEHOLDER}
+-
+add: olcMirrorMode
+olcMirrorMode: TRUE
+EOF
+
+    info "Add SyncRepl to the database done"
+
+    touch "$LDAP_REPLICATION_INSTALL_LOCK_FILE"
+  fi
+
+fi

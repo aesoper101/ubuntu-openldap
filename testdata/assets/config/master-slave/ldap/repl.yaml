@@ -1,0 +1,17 @@
+LDAP_REPLICATION_MODE: SyncRepl
+
+LDAP_REPLICATION_MASTER: true
+LDAP_READONLY_USER_ENABLED: true
+LDAP_REPLICATION_USE_ENABLER: true
+
+#LDAP_REPLICATION_DB_SYNC_REPL:
+#  - rid=001 provider=ldap://ldap:389 searchbase="dc=example,dc=org" bindmethod=simple binddn="cn=admin,dc=example,dc=org" credentials=admin scope=sub schemachecking=off type=refreshAndPersist interval=00:00:00:02 retry="30 5 300 3" attrs="*,+" filter="(objectClass=person)"
+#  - rid=002 provider=ldap://ldap01:389 searchbase="dc=example,dc=org" bindmethod=simple binddn="cn=admin,dc=example,dc=org" credentials=admin scope=sub schemachecking=off type=refreshAndPersist interval=00:00:00:02 retry="30 5 300 3" attrs="*,+" filter="(objectClass=person)"
+#  - rid=003 provider=ldap://ldap02:389 searchbase="dc=example,dc=org" bindmethod=simple binddn="cn=admin,dc=example,dc=org" credentials=admin scope=sub schemachecking=off type=refreshAndPersist interval=00:00:00:02 retry="30 5 300 3" attrs="*,+" filter="(objectClass=person)"
+#
+#LDAP_REPLICATION_CONFIG_SYNC_REPL:
+#  - rid=001 provider=ldap://ldap:389 searchbase="cn=config" bindmethod=simple binddn="cn=config" credentials=config scope=sub schemachecking=off type=refreshAndPersist interval=00:00:00:02 retry="30 5 300 3" attrs="*,+"
+#  - rid=002 provider=ldap://ldap01:389 searchbase="cn=config" bindmethod=simple binddn="cn=config" credentials=config scope=sub schemachecking=off type=refreshAndPersist interval=00:00:00:02 retry="30 5 300 3" attrs="*,+"
+#  - rid=003 provider=ldap://ldap02:389 searchbase="cn=config" bindmethod=simple binddn="cn=config" credentials=config scope=sub schemachecking=off type=refreshAndPersist interval=00:00:00:02 retry="30 5 300 3" attrs="*,+"
+
+LDAP_TLS_PROVIDER_URI:

@@ -1,0 +1,30 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+if is_not_initialized && [ ! -f "$LDAP_CUSTOM_SCHEMA_INSTALL_LOCK_FILE" ]; then
+  info "Add custom schema to ldap"
+
+  # shellcheck disable=SC2231
+  for f in $LDAP_SCHEMA_CUSTOM_DIR/*.schema; do
+
+    filename=$(basename -- "$f" | cut -d. -f1)
+
+    ldap-schema-manager -l | grep -o -q "$filename" || {
+      info "Add custom schema to ldap: $f"
+
+      ldap-schema-manager -i "$f"
+
+      info "Add custom schema to ldap done: $f"
+    }
+
+  done
+
+  info "Add custom schema to ldap done"
+  touch "$LDAP_CUSTOM_SCHEMA_INSTALL_LOCK_FILE"
+fi

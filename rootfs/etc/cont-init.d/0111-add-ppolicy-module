@@ -1,0 +1,21 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+source /assets/functions/ldap
+
+if is_not_initialized; then
+  info "Add ppolicy overlay to slapd"
+
+  cat <<EOF | ldapadd -Q -Y EXTERNAL -H ldapi:///
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: ppolicy.la
+EOF
+
+   info "Add ppolicy overlay to slapd done"
+fi

@@ -1,0 +1,75 @@
+#!/bin/bash
+
+set -e
+
+source /assets/functions/common
+source /assets/functions/log-utils
+
+usage() {
+  echo "Usage: ldap_anon [OPTIONS]
+
+ ldap_anon - Enable or disable anonymous access to LDAP server.
+
+ OPTIONS:
+
+      -h, --help   Print this help message.
+      -d, --disable   Disable anonymous access to LDAP server. if not set, anonymous access will be enabled.
+
+  "
+}
+
+ldap_enable_anon() {
+  info "Enable anonymous access to LDAP server"
+
+}
+
+ldap_disable_anon() {
+  info "Disable anonymous access to LDAP server"
+
+}
+
+parse_args() {
+  local ALLOW_ANON=1
+  local -r ARGS=$(getopt -o hd --long help,disable -n 'ldap_anon' -- "$@")
+
+  # shellcheck disable=SC2181
+  if [ $? != 0 ]; then
+    echo "Failed parsing options." >&2
+    usage
+    exit 1
+  fi
+
+  eval set -- "$ARGS"
+
+  while true; do
+    case "$1" in
+    -h | --help)
+      usage
+      exit 0
+      shift
+      ;;
+    -d | --disable)
+      # TODO: implement disable
+      echo "Not implemented yet"
+      ALLOW_ANON=0
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      usage
+      break
+      ;;
+    esac
+  done
+
+  if [ $ALLOW_ANON -eq 1 ]; then
+    ldap_enable_anon
+  else
+    ldap_disable_anon
+  fi
+}
+
+parse_args "$@"

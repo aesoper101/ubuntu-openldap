@@ -1,0 +1,15 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+source /assets/functions/setenv
+source /assets/functions/common
+source /assets/functions/log-utils
+
+if [ -z "$(ls -A -I lost+found --ignore=.* "$LDAP_DB_DIR")" ] && [ -n "$(ls -A -I lost+found --ignore=.* "$LDAP_CONFIG_DIR")" ]; then
+  error "Error: the database directory ($LDAP_DB_DIR) is empty but not the config directory ($LDAP_CONFIG_DIR)"
+  exit 1
+elif [ -n "$(ls -A -I lost+found --ignore=.* "$LDAP_DB_DIR")" ] && [ -z "$(ls -A -I lost+found --ignore=.* "$LDAP_CONFIG_DIR")" ]; then
+  error "Error: the config directory ($LDAP_CONFIG_DIR) is empty but not the database directory ($LDAP_DB_DIR)"
+  exit 1
+fi

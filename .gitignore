@@ -1,0 +1,6 @@
+.idea
+certs/*.pem
+certs/*.csr
+testdata/assets/certs/*.pem
+testdata/assets/certs/*.csr
+
