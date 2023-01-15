@@ -68,7 +68,4 @@ LDAP_AUDIT_LOG_ENABLED: true
 # dyngroup
 LDAP_DYNGROUP_ENABLED: true
 
-# disable anonymous access
-LDAP_ANONYMOUS_ACCESS_DISABLE: false
-
 LDAP_SERVER_ID: 100

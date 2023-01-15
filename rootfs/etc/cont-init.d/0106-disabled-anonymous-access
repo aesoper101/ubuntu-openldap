@@ -9,10 +9,9 @@ source /assets/functions/ldap
 
 if is_not_initialized; then
 
-  if is_boolean_yes "$LDAP_ANONYMOUS_ACCESS_DISABLE"; then
-    info "Disable anonymous access"
+  info "Disable anonymous access"
 
-    ldapmodify -Q -Y EXTERNAL -H ldapi:/// <<EOF
+  ldapmodify -Q -Y EXTERNAL -H ldapi:/// <<EOF
 dn: cn=config
 changetype: modify
 add: olcDisallows
@@ -29,6 +28,6 @@ add: olcRequires
 olcRequires: authc
 EOF
 
-    info "Disable anonymous access done"
-  fi
+  info "Disable anonymous access done"
+
 fi

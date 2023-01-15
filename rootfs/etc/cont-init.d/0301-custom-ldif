@@ -10,16 +10,21 @@ source /assets/functions/ldap
 if is_not_initialized && [ ! -f "$LDAP_CUSTOM_LDIF_INSTALL_LOCK_FILE" ]; then
   info "Add custom ldif to ldap"
 
-  #  $LDAP_SCHEMA_CUSTOM_DIR/*.ldif
-  # shellcheck disable=SC2231
-  for f in $LDAP_LDIF_CUSTOM_DIR/*.ldif; do
-    info "Add custom ldif to ldap: $f"
+  if [ -z "$(ls -A $LDAP_LDIF_CUSTOM_DIR)" ]; then
+    info "No custom ldif found in $LDAP_LDIF_CUSTOM_DIR"
+  else
+    #  $LDAP_SCHEMA_CUSTOM_DIR/*.ldif
+    # shellcheck disable=SC2231
+    for f in $LDAP_LDIF_CUSTOM_DIR/*.ldif; do
+      info "Add custom ldif to ldap: $f"
 
-    # shellcheck disable=SC2002
-    cat "$f" | sed -e "/^creatorsName: /d" -e "/^createTimestamp: /d" -e "/^entryUUID: /d" -e "/^entryCSN: /d" -e "/^modifiersName: /d" -e "/^modifyTimestamp: /d" -e "/^structuralObjectClass: /d" | ldapadd -Y EXTERNAL -H ldapi:///
+      # shellcheck disable=SC2002
+      cat "$f" | sed -e "/^creatorsName: /d" -e "/^createTimestamp: /d" -e "/^entryUUID: /d" -e "/^entryCSN: /d" -e "/^modifiersName: /d" -e "/^modifyTimestamp: /d" -e "/^structuralObjectClass: /d" | ldapadd -Y EXTERNAL -H ldapi:///
 
-    info "Add custom ldif to ldap done: $f"
-  done
+      info "Add custom ldif to ldap done: $f"
+    done
+
+  fi
 
   touch "$LDAP_CUSTOM_LDIF_INSTALL_LOCK_FILE"
 

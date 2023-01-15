@@ -10,20 +10,25 @@ source /assets/functions/ldap
 if is_not_initialized && [ ! -f "$LDAP_CUSTOM_SCHEMA_INSTALL_LOCK_FILE" ]; then
   info "Add custom schema to ldap"
 
-  # shellcheck disable=SC2231
-  for f in $LDAP_SCHEMA_CUSTOM_DIR/*.schema; do
+  # if directory is empty, skip
+  if [ -z "$(ls -A $LDAP_SCHEMA_CUSTOM_DIR)" ]; then
+    info "No custom schema found in $LDAP_SCHEMA_CUSTOM_DIR"
+  else
+    # shellcheck disable=SC2231
+    for f in $LDAP_SCHEMA_CUSTOM_DIR/*.schema; do
 
-    filename=$(basename -- "$f" | cut -d. -f1)
+      filename=$(basename -- "$f" | cut -d. -f1)
 
-    ldap-schema-manager -l | grep -o -q "$filename" || {
-      info "Add custom schema to ldap: $f"
+      ldap-schema-manager -l | grep -o -q "$filename" || {
+        info "Add custom schema to ldap: $f"
 
-      ldap-schema-manager -i "$f"
+        ldap-schema-manager -i "$f"
 
-      info "Add custom schema to ldap done: $f"
-    }
+        info "Add custom schema to ldap done: $f"
+      }
 
-  done
+    done
+  fi
 
   info "Add custom schema to ldap done"
   touch "$LDAP_CUSTOM_SCHEMA_INSTALL_LOCK_FILE"

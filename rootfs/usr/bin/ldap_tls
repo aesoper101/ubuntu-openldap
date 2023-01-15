@@ -202,7 +202,7 @@ parse_args() {
 
     ldap_enable_tls "$CA_FILE" "$CERT_FILE" "$CERT_KEY_FILE" "$DH_FILE" "$VERIFY_CLIENT" "$CIPHERS" "$CHANGE_TYPE"
 
-    if is_boolean_yes "$REWRITE_CONF"; then
+    if is_boolean_yes "$REWRITE_CONF" && [ -f "$LDAP_ETC_CONF_FILE" ]; then
       cp -f "$LDAP_ETC_CONF_FILE" "$LDAP_ETC_CONF_FILE_BACKUP"
 
       sed -e "s,^TLS_CACERT.*,TLS_CACERT ${CA_FILE},g" \
@@ -217,7 +217,7 @@ parse_args() {
   else
     ldap_disable_tls
 
-    if is_boolean_yes "$REWRITE_CONF"; then
+    if is_boolean_yes "$REWRITE_CONF" && [ -f "$LDAP_ETC_CONF_FILE" ]; then
 
       _DEFAULT_CA_FILE="/etc/ssl/certs/ca-certificates.crt"
 

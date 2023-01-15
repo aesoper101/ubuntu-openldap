@@ -1,4 +1,4 @@
-FROM aesoper/ubuntu-s6-overlay:v1.0.6
+FROM aesoper/ubuntu-s6-overlay:v1.0.7
 MAINTAINER "aesoper" <weilanzhuan@163.com>
 
 
@@ -26,12 +26,13 @@ RUN if [ -z "${LDAP_OPENLDAP_GID}" ]; then groupadd -g 911 -r openldap; else gro
 
 
 # install openldap \
-RUN apt-get update && LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
+RUN apt-get update && LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y  \
     wget \
     python3 \
     python3-pip \
     net-tools \
     slapd \
+    slapd-contrib \
     ldap-utils \
     ldapscripts \
     inotify-tools \
@@ -54,11 +55,6 @@ RUN apt-get update && LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y
 
 RUN wget https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/${YQ_BINARY}.tar.gz -O - |\
       tar xz && mv ${YQ_BINARY} /usr/bin/yq
-
-#RUN  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CC86BB64 && \
-#     add-apt-repository ppa:rmescandon/yq && \
-#     apt-get update && \
-#     apt-get install -y yq
 
 ADD ./rootfs /
 

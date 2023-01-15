@@ -41,14 +41,12 @@ olcAccess: {1}to attrs=userPassword,shadowLastChange
   by self write
   by anonymous auth
   by * none
-olcAccess: {2}to dn.base="" by * read
-olcAccess: {3}to *
+olcAccess: {2}to *
   by dn="${ADMIN_USER_DN}" write
   by dn="${READONLY_USER_DN}" read
   by self write
   by anonymous auth
   by * none
-
 EOF
 
   info "Add readonly user to slapd access control done"
