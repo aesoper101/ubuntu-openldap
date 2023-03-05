@@ -1,5 +1,5 @@
 NAME = aesoper/openldap
-VERSION = v1.0.0
+VERSION = v1.0.1
 
 LOCAL_CERTS_PATH = ./certs
 VOLUME_CERTS_PATH = ./testdata/assets/certs

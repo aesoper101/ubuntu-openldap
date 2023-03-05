@@ -1,4 +1,4 @@
-FROM aesoper/ubuntu-s6-overlay:v1.0.7
+FROM aesoper/ubuntu-s6-overlay:v1.0.9
 MAINTAINER "aesoper" <weilanzhuan@163.com>
 
 
