@@ -45,10 +45,10 @@ RUN apt-get update && LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y
     krb5-kdc-ldap \
     krb5-admin-server \
     schema2ldif && \
-    wget --no-check-certificate https://meddeb.net/pub/pqchecker/deb/8/pqchecker_${PQCHECKER_VERSION}_amd64.deb -O pqchecker.deb && \
-    echo "${PQCHECKER_MD5} pqchecker.deb" | md5sum -c && \
-    dpkg -i pqchecker.deb && \
-    rm pqchecker.deb && \
+#    wget --no-check-certificate https://meddeb.net/pub/pqchecker/deb/8/pqchecker_${PQCHECKER_VERSION}_amd64.deb -O pqchecker.deb && \
+#    echo "${PQCHECKER_MD5} pqchecker.deb" | md5sum -c && \
+#    dpkg -i pqchecker.deb && \
+#    rm pqchecker.deb && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     rm -rf /var/lib/ldap /etc/ldap/slapd.d
@@ -63,3 +63,11 @@ ADD ./rootfs /
 
 EXPOSE 389 636
 
+# if download pqchecker.deb failed, use local file
+#COPY ./pqchecker.deb /tmp/pqchecker.deb
+#RUN dpkg -i /tmp/pqchecker.deb && rm /tmp/pqchecker.deb
+
+COPY ./tmp/pqchecker_2.0.0_amd64.deb /tmp
+RUN echo "${PQCHECKER_MD5} /tmp/pqchecker_2.0.0_amd64.deb" | md5sum -c && \
+    dpkg -i /tmp/pqchecker_2.0.0_amd64.deb && \
+    rm /tmp/pqchecker_2.0.0_amd64.deb
